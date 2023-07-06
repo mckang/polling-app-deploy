@@ -50,22 +50,33 @@ ApplicationCredentialSecret: KiC Account API Secret
 ---
 
 #실행
+
+기초 환경 설정
 ansible-playbook playbooks/setup.yml
 
+KiC API 연결 확인
 ansible-inventory --list
 
+VM 생성 
 ansible-playbook playbooks/vms/create.yml
 
+VM 생성 완료 확인
 ansible-playbook playbooks/vms/check.yml
 
+Docker Swarm Cluster 구성
 ansible-playbook -i playbooks/cluster_inventory.yml playbooks/swarm/playbook.yml
 
+Docker Swarm Cluster 확인
 ansible -i playbooks/cluster_inventory.yml -a 'sudo docker node ls' manager
 
+서비스 배포
 ansible-playbook -i playbooks/cluster_inventory.yml playbooks/deploy/playbook.yml
 
+서비스 배포 확인
 ansible -i playbooks/cluster_inventory.yml -a 'sudo docker service ls' manager
 
+서비스 동작 확인
 ansible -i playbooks/cluster_inventory.yml -a 'curl 127.0.0.1' manager
 
-ssh -F ssh.cfg ansible@10.0.3.150 -i ../secrets/team1-ansible
+VM 접속
+ssh -F ssh.cfg ansible@VM 아이피 -i ../secrets/team1-ansible
