@@ -1,0 +1,44 @@
+- name: Deploy to Cluster
+  hosts: manager
+  become: true
+  tasks:
+    - name: Make docker-compose file
+      copy:
+        dest: /data/docker-compose.yml
+        mode: 0777
+        content: |
+          version: '3.8'
+          services:
+            frontend:
+              image: mckang/frontend:latest
+              deploy:
+                replicas: 1 
+              ports:
+              - target: 80
+                published: 80
+                protocol: tcp
+            backend:
+              image: mckang/backend:latest
+              deploy:
+                replicas: 2
+              environment: # Pass environment variables to the service
+                SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/polls?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&useLegacyDatetimeCode=false
+                SPRING_DATASOURCE_USERNAME: root
+                SPRING_DATASOURCE_PASSWORD: secret           
+            db:
+              image: mysql
+              ports:
+              - target: 3306
+                published: 3306
+              environment:
+                MYSQL_DATABASE: polls
+                MYSQL_ROOT_PASSWORD: secret
+              volumes: 
+                - myvolume:/var/lib/mysql
+          volumes: 
+            myvolume:
+    - name: Run docker-compose 
+      become: true
+      shell:
+        chdir: "/data"
+        cmd: docker stack deploy --compose-file docker-compose.yml team1 

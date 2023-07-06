@@ -1,0 +1,15 @@
+---
+
+- hosts: localhost
+  gather_facts: false
+  vars_files:
+    - ../../../secrets/init_values.yml      
+    - vars.yml     
+  tasks:  
+    - name: Delete Virtual Machines
+      include_role:
+        name: kakaoicloud.compute
+      vars:
+        task: delete
+        VM_NAME: "{{ item.name }}"     
+      loop: '{{ VM_INFOS }}'      

@@ -1,0 +1,62 @@
+- name: Wait for finishing Cloud-Init
+  vars_files:
+    - ../../../secrets/init_values.yml      
+  hosts: all
+  become: yes
+  gather_facts: false
+  tasks:
+    - name: Check instance
+      wait_for_connection:
+        delay: 5
+        timeout: 60
+    - name: Wait until the string "finished" is in the file /var/log/cloud-init-output.log before continuing
+      ansible.builtin.wait_for:
+        path: /var/log/cloud-init-output.log
+        search_regex: "Cloud-init .* finished"       
+
+- name: Install Docker to VM
+  hosts: all
+  become: yes
+  gather_facts: true
+  roles:
+    - name: Install Docker
+      role: geerlingguy.docker
+      docker_install_compose_plugin: true
+      docker_users:
+        - ubuntu
+      docker_daemon_options:
+        data-root: /data/docker  
+  post_tasks:        
+    - name: Ensure dependencies are installed.
+      apt:
+        name:
+          - pip
+          - jq
+        state: present  
+    - name: Install docker-py python package
+      pip:
+        name: 
+          - docker-py   
+
+- name: Setup Manager
+  hosts: manager
+  become: true
+  tasks:
+    - name: Init a new swarm with default parameters
+      docker_swarm:
+        state: present
+
+    - name: get info
+      docker_swarm_info:
+      register: swarm_info
+
+- name: Setup Manager
+  hosts: worker
+  become: true
+  tasks:
+    - name: Add Worker to manager node
+      docker_swarm:
+        state: join
+        advertise_addr: worker
+        join_token: "{{ hostvars['manager']['swarm_info']['swarm_facts']['JoinTokens']['Worker'] }}"
+        remote_addrs: [ "{{hostvars['manager']['ansible_ssh_host']}}:2377"]  

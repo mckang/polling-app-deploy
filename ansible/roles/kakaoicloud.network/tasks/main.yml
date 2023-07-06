@@ -1,0 +1,73 @@
+---
+
+#ansible localhost --module-name include_role --args name=kakaoicloud.compute -e task=network
+- name: Authenticate to the cloud and retrieve the service catalog
+  openstack.cloud.auth:
+    cloud: "{{ APIAlias }}" 
+  # no_log: True
+
+- name: Gather information about previously created networks
+  openstack.cloud.networks_info:
+    # filters:
+    #   is_shared: true  
+  register: vpc
+  no_log: True
+
+- name: check network variables
+  set_fact:  
+    user_subnets: "{{ vpc.networks | selectattr('is_shared','==', true) | map(attribute='subnet_ids')  | flatten}}"      
+    user_vpcs: "{{ vpc.networks | selectattr('is_shared','==', true) |  map(attribute='name') | map('regex_replace', '^(.*_)([0-9a-zA-Z\\-]*)$', '\\2') }}"      
+    user_subnets_name: "{{ vpc.networks | selectattr('is_shared','==', true) |  map(attribute='name') | map('regex_replace', '^(.*)_([0-9a-zA-Z\\-]*)$', '\\1') | map('regex_replace', '^network$', 'main') }}"      
+    user_nws: "{{ vpc.networks | selectattr('is_shared','==', true) |  map(attribute='id') }}"      
+    public_nw: "{{ vpc.networks | selectattr('is_shared','==', false) | map(attribute='id') | first}}"
+  no_log: True
+
+- name: initialize subnet mappings
+  set_fact:  
+    subnet_network_map: "{{ subnet_network_map | default({}) | combine( {user_subnets[idx] : user_nws[idx]} )}}"
+    subnetnm_network_map: "{{ subnetnm_network_map | default({}) | combine( {user_subnets_name[idx] : user_nws[idx]} )}}"
+  no_log: True
+  loop: "{{ range(0, (user_nws | length) ) | list }}"
+  loop_control:
+    loop_var: idx
+
+- name: check subnet mappings
+  set_fact:  
+    subnets_networks: "{{ user_vpcs | zip(user_subnets_name, user_subnets, user_nws) | list }}" 
+  no_log: True
+
+- name: Show floating ip network
+  debug:
+    msg: 
+      - "======================================="
+      - "Floating Ip Network ID : var name ( public_nw )"
+      - "======================================="
+      - "network id : {{ public_nw }}"
+      - "======================================="
+
+# - name: Show user network id
+#   debug:
+#     msg: 
+#       - "======================================="
+#       - "User Network ID"
+#       - "[ [ VPC ID, Subnet ID , Network Id ] ]"
+#       - "======================================="        
+#       - "{{subnets_networks}}"
+#       - "======================================="   
+- name: Show subnet map
+  debug:
+    msg: 
+      - "======================================="
+      - "Subnet Map : var name ( subnet_network_map ) "
+      - "Subnet Id : Network Id"
+      - "======================================="        
+      - "{{subnet_network_map}}"
+      - "======================================="  
+      - "======================================="
+      - "Subnet Map : var name ( subnetnm_network_map )"
+      - "Subnet Name : Network Id"
+      - "======================================="        
+      - "{{subnetnm_network_map}}"
+      - "======================================="  
+
+

@@ -1,0 +1,45 @@
+---
+
+- name: check VM_NAME var
+  assert:
+    that:
+      - VM_NAME != ""
+    msg: "VM_NAME is mandatory"
+  tags: [ "check_vars" ]
+
+- openstack.cloud.server_info:
+    filters:
+      vm_state: active
+      # metadata:
+      #   ansible: "true"
+    server: "{{ VM_NAME }}"
+  register: VM_INFO
+  when: DELETE_DATA_VOLUMES    
+- set_fact:  
+    VM_DATA_VOLUMES: "{{ VM_INFO.servers[0].attached_volumes | selectattr('delete_on_termination', 'equalto', False) | map(attribute='id') }}"      
+  when: DELETE_DATA_VOLUMES and ( VM_INFO.servers | length > 0 )
+- set_fact:  
+    VM_DATA_VOLUMES: []      
+  when: DELETE_DATA_VOLUMES and ( VM_INFO.servers | length < 1 )  
+- name: remove the instance
+  openstack.cloud.server:
+    state: absent
+    name: "{{VM_NAME}}"
+    wait: yes
+  register: VM_DELETE_RESULT     
+- debug:
+    msg: "remove the instance : {{ VM_DELETE_RESULT }}"    
+- name: remove the data volume
+  openstack.cloud.volume:
+    state: absent
+    name: "{{item}}" 
+    timeout: 300
+    wait: yes
+  register: VM_DELETE_VOLS_RESULT 
+  loop: "{{ VM_DATA_VOLUMES }}"
+  loop_control:
+    index_var: index
+  when: DELETE_DATA_VOLUMES       
+- debug:
+    msg: "removed data volumes : {{ VM_DELETE_VOLS_RESULT }}"    
+  when: DELETE_DATA_VOLUMES

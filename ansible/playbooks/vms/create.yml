@@ -1,0 +1,47 @@
+---
+
+- name: Create Virtual Machine for GCU
+  hosts: localhost
+  gather_facts: false
+  vars:
+   
+  vars_files:
+    - ../../../secrets/init_values.yml      
+    - vars.yml
+  tasks:          
+    - name: Create Virtual Machine
+      include_role:
+        name: kakaoicloud.compute
+      vars:
+        task: create
+        VM_NAME: "{{ VMInfo.name }}"  
+        VM_NETWORKS:
+          - net-id: "{{ subnet_id }}"  
+        VM_ADD_HOST_GROUPS: "{{ VMInfo.groups | default([]) + ['now_added'] }}"   
+        VM_ADD_HOST_VARS: "{{ VMInfo.env_values | default({}) }}"
+        VM_KEY_NAME: manager
+        VM_SG_NAMES: 
+          - "{{ TeamName }}-sg" 
+      loop: '{{ VM_INFOS }}'
+      loop_control: 
+        loop_var: VMInfo           
+
+- name: Summary
+  hosts: localhost
+  gather_facts: false
+  vars_files:
+    - ../../../secrets/init_values.yml   
+  tasks:
+    - name: Summary
+      debug:
+        msg: "{{ host }} : {{ hostvars[host].ansible_ssh_host }} : {{ hostvars[host].role }}"
+      loop: '{{ groups.now_added }}'
+      loop_control: 
+        loop_var: host    
+    - name: Setup Inventory Config
+      ansible.builtin.template:
+        src: ../../templates/inventory.yml.j2
+        dest: ../cluster_inventory.yml               
+
+
+

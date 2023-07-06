@@ -1,0 +1,20 @@
+---  
+
+- name: Wait for finishing Cloud-Init
+  vars_files:
+    - ../../../secrets/init_values.yml      
+  hosts: "{{TeamName}}"
+  become: yes
+  gather_facts: false
+  tasks:
+    - name: Check instance
+      wait_for_connection:
+        delay: 5
+        timeout: 60
+    - name: Wait until the string "finished" is in the file /var/log/cloud-init-output.log before continuing
+      ansible.builtin.wait_for:
+        path: /var/log/cloud-init-output.log
+        search_regex: "Cloud-init .* finished"          
+
+
+

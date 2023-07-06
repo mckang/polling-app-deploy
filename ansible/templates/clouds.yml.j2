@@ -1,0 +1,9 @@
+clouds:
+  {{ APIAlias }}:
+    region_name: 'kr-central-1'
+    interface: 'public'
+    auth_type: "v3applicationcredential"
+    auth:
+      auth_url: 'https://iam.kakaoi.io/identity/v3'
+      application_credential_id: {{ ApplicationCredentialID }}
+      application_credential_secret: {{ ApplicationCredentialSecret }}

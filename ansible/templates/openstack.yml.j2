@@ -1,0 +1,15 @@
+plugin: openstack.cloud.openstack
+expand_hostvars: False
+fail_on_errors: True
+all_projects: False
+use_names: False
+only_clouds:
+  - {{ APIAlias }}
+groups:
+  ansible: openstack.metadata.ansible is defined and openstack.metadata.ansible == 'true'
+keyed_groups:
+  - key: openstack.metadata.group
+    default_value: not_ansible
+    parent_group: ansible
+    prefix: "ansible"
+cache: False

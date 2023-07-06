@@ -1,0 +1,29 @@
+---
+subnet_id: 614894f2-fbf9-4f44-9371-79d253f5f0aa
+VM_META: ansible=true,group={{TeamName}}
+VM_IMAGE_NAME: Ubuntu 20.04
+VM_VOLUME_OS_SIZE: 20      
+VM_DATA_VOLUMES:
+  - device: /dev/vdb
+    mount: /data
+    size: 20   
+VM_KEY_NAME: thomas-kic
+VM_SG_NAMES: thomas-dev
+VM_FLAVOR_NAME: a1-2-std    
+
+VM_INFOS:
+  - name: "{{TeamName}}-01"
+    groups: 
+      - swarm
+    env_values: 
+      role: manager    
+  - name: "{{TeamName}}-02"
+    groups: 
+      - swarm
+    env_values: 
+      role: worker        
+  - name: "{{TeamName}}-03"
+    groups: 
+      - swarm
+    env_values: 
+      role: worker      

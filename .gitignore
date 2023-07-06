@@ -1,0 +1,19 @@
+# Created by https://www.toptal.com/developers/gitignore/api/ansible
+# Edit at https://www.toptal.com/developers/gitignore?templates=ansible
+
+### Ansible ###
+*.retry
+.DS_Store
+
+secrets/*.yml
+secrets/*.pem
+secrets/*.pub
+secrets/*-ansible
+secrets/*-jumpuser
+ansible/ansible.cfg
+ansible/ssh.cfg
+ansible/inventory/openstack.yml
+ansible/inventory/group_vars
+ansible/inventory/host_vars
+
+# End of https://www.toptal.com/developers/gitignore/api/ansible

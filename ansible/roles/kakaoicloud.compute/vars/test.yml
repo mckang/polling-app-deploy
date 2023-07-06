@@ -1,0 +1,13 @@
+---
+VM_ANSIBLE_PUB_KEY: ansible_key.pub
+VM_USERDATA_TEMPLATE: userdata.j2
+VM_DATA_VOLUMES:
+  - device: /dev/vdb
+    mount: /data1
+    size: 15
+  - device: /dev/vdc
+    mount: /data2
+    size: 15
+  - device: /dev/vde
+    mount: /data3
+    size: 15        

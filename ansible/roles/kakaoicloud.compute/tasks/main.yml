@@ -1,0 +1,22 @@
+---
+
+- debug:
+    msg: "task : {{task}}"
+
+- name: check we have not forgotten any mandatory vars
+  assert:
+    that:
+      - task in ['list','create','delete','test','network']
+    msg: "Task is mandatory: create, delete, list, test"
+  tags: [ "check_vars" ]
+
+- name: Authenticate to the cloud and retrieve the service catalog
+  openstack.cloud.auth:
+    cloud: "{{ APIAlias }}"
+
+- name: Include task specific vars
+  include_vars:
+    file: vars/{{ task }}.yml
+  tags: always
+
+- include_tasks: "{{ task }}.yml"

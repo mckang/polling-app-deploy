@@ -1,0 +1,9 @@
+Host jump
+    HostName {{ JumpHost.Address }}
+    User {{ JumpHost.User }}
+    Port {{ JumpHost.Port }}
+    IdentityFile {{ JumpHost.IdentityFile }}
+
+Host {{ VPC_NW_Range }}
+  StrictHostKeyChecking no 
+  ProxyCommand ssh -F ssh.cfg -W %h:%p jump

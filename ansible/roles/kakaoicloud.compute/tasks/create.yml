@@ -1,0 +1,106 @@
+---
+
+- name: check VM_NAME var
+  assert:
+    that:
+      - VM_NAME != ""
+    msg: "VM_NAME is mandatory"
+  tags: [ "check_vars" ]
+
+- name: check VM_DATA_VOLUMES var
+  set_fact:        
+    VM_DATA_VOLUMES: "{{ [] }}"
+  when: VM_DATA_VOLUMES is not defined
+     
+- name: check VM_ANSIBLE_PUB_KEY var
+  set_fact:        
+    VM_ANSIBLE_PUB_KEY: "{{ lookup('file', VM_ANSIBLE_PUB_KEY_FILE + '') }}"
+- name: check VM_USERDATA_TEMPLATE var
+  set_fact:  
+    VM_USERDATA: "{{ lookup('template', VM_USERDATA_TEMPLATE_FILE + '') }}"
+- name: create openstack os volume
+  openstack.cloud.volume:
+    state: present
+    size: "{{VM_VOLUME_OS_SIZE}}"
+    display_name: "{{VM_NAME}}_os"
+    image: "{{VM_IMAGE_NAME}}"
+    timeout: 300
+    wait: yes
+  register: VM_OS_VOLUME_RESULT    
+- name: extract os volume info
+  set_fact:
+    VM_OS_VOLUME_ID: "{{ VM_OS_VOLUME_RESULT.volume.id }}"
+- name: create openstack data volume
+  openstack.cloud.volume:
+    state: present
+    size: "{{volumeinfo.size}}"
+    display_name: "{{VM_NAME}}_data_{{index}}"
+    timeout: 300
+    wait: yes
+  register: VM_DATA_VOLUMES_RESULT
+  loop: "{{ VM_DATA_VOLUMES }}"
+  loop_control:
+    index_var: index 
+    loop_var: volumeinfo  
+- name: extract volume info
+  set_fact:
+    VM_DATA_VOLUME_IDS: "{{ VM_DATA_VOLUMES_RESULT.results | map(attribute='volume')| map(attribute='id')}}"
+
+- name: Virtual Machine Create Request Summary 
+  debug:        
+    msg: 
+      - "VM_NAME : {{ VM_NAME }}"          
+      - "VM_ANSIBLE_PUB_KEY_FILE : {{ VM_ANSIBLE_PUB_KEY_FILE }}"  
+      - "VM_SG_NAMES : {{ VM_SG_NAMES }}"
+      - "VM_FLAVOR_NAME : {{ VM_FLAVOR_NAME }}"
+      - "VM_KEY_NAME : {{ VM_KEY_NAME }}"
+      - "VM_IMAGE_NAME : {{ VM_IMAGE_NAME }}"        
+      - "VM_NETWORKS : {{ VM_NETWORKS }}"
+      - "VM_OS_VOLUME_ID : {{ VM_OS_VOLUME_ID }}"
+      - "VM_DATA_VOLUME_IDS : {{ VM_DATA_VOLUME_IDS }}"
+      - "VM_USERDATA : {{ VM_USERDATA }}"   
+      - "VM_META : {{ VM_META }}"   
+
+- name: launch an instance
+  openstack.cloud.server:
+    state: present
+    name: "{{VM_NAME}}"
+    boot_volume: "{{ VM_OS_VOLUME_ID }}"
+    key_name: "{{ VM_KEY_NAME }}"
+    security_groups: "{{ VM_SG_NAMES }}"
+    timeout: 200
+    flavor: "{{ VM_FLAVOR_NAME }}"
+    terminate_volume: true
+    meta: "{{VM_META}}"
+    volumes: "{{VM_DATA_VOLUME_IDS}}"
+    nics: "{{VM_NETWORKS}}"
+    userdata: "{{VM_USERDATA}}"
+    auto_ip: false
+    wait: yes
+  register: VM_RESULT
+- name: extract vm info
+  set_fact:
+    VM_IP: "{{ VM_RESULT.server.addresses | dict2items | community.general.json_query('[0].value[0].addr')  }}"
+    VM_NAME: "{{ VM_RESULT.server.name  }}"
+    VM_ADMIN_PW: "{{ VM_RESULT.server.admin_password  }}"
+- debug:
+    msg: "vmip : {{ VM_IP }}, vm_name : {{ VM_NAME }}, vm_admin_pw : {{ VM_ADMIN_PW }}, groups: {{ VM_ADD_HOST_GROUPS }}"
+- debug:
+    var: VM_ADD_HOST_GROUPS   
+- debug:
+    var: VM_ADD_HOST_VARS       
+- name: Add host to multiple groups
+  ansible.builtin.add_host:
+    hostname: '{{ VM_NAME }}'
+    ip: '{{ VM_IP }}'
+    ansible_ssh_host: '{{ VM_IP }}'
+    ansible_ssh_user: 'ansible'    
+    groups: '{{ VM_ADD_HOST_GROUPS }}'
+- name: Add host to multiple groups with args
+  ansible.builtin.add_host:
+    hostname: '{{ VM_NAME }}'
+    ip: '{{ VM_IP }}'
+    ansible_ssh_host: '{{ VM_IP }}'
+    ansible_ssh_user: 'ansible'    
+    groups: '{{ VM_ADD_HOST_GROUPS }}'
+  args: '{{ VM_ADD_HOST_VARS }}'

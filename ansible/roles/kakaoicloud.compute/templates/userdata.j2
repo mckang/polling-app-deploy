@@ -1,0 +1,55 @@
+#cloud-config
+
+device_aliases:
+{% for volume_info in VM_DATA_VOLUMES %}
+  ephemeral{{loop.index}}: {{volume_info.device}}
+{% endfor %}
+
+disk_setup:
+{% for volume_info in VM_DATA_VOLUMES %}
+  ephemeral{{loop.index}}:
+    table_type: gpt
+    layout: true
+    overwrite: False
+{% endfor %}
+
+fs_setup:
+{% for volume_info in VM_DATA_VOLUMES %}
+  - label: ephemeral{{loop.index}}
+    filesystem: ext4
+    device: ephemeral{{loop.index}}
+    partition: auto  
+{% endfor %}
+
+mounts:
+{% for volume_info in VM_DATA_VOLUMES %}
+  - [ ephemeral{{loop.index}}, {{volume_info.mount}}, "auto", "defaults,nofail", "0", "0" ]
+{% endfor %}
+ 
+growpart:
+  mode: auto
+  devices:
+    - '/'
+{% for volume_info in VM_DATA_VOLUMES %}
+    - '{{volume_info.device}}1'
+{% endfor %}    
+  ignore_growroot_disabled: false
+  
+timezone: "Asia/Seoul"
+
+users:
+  - default
+  - name: ansible
+    groups: users
+    sudo:     
+      - "ALL=(ALL) NOPASSWD:ALL"
+    shell: /bin/bash
+    ssh-authorized-keys: 
+      - "{{ VM_ANSIBLE_PUB_KEY }}"
+
+packages: 
+  - git
+  - ansible
+
+runcmd:
+  - [ python3, -m, pip, install, ansible ]

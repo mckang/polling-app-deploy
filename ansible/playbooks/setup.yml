@@ -1,0 +1,49 @@
+- name: Setup Ansible Environment
+  hosts: localhost
+  gather_facts: false
+  connection: local 
+  # become: true
+  vars_files:
+    - ../../secrets/init_values.yml  
+  tasks:
+    # - name: Run command if /path/to/database does not exist (without 'args')
+    #   ansible.builtin.command: whoami  
+    #   register: result
+    # - debug:
+    #     msg: "{{result}}"
+    - name: Install openstacksdk(1.0.1)
+      pip:
+        name: openstacksdk
+        version: 1.0.1
+    - name: Install openstack.cloud collection
+      community.general.ansible_galaxy_install:
+        type: collection
+        name: openstack.cloud                
+    - name: Setup SSH Config
+      ansible.builtin.template:
+        src: ../templates/ssh.cfg.j2
+        dest: ../ssh.cfg        
+    - name: Setup Ansible Config
+      ansible.builtin.template:
+        src: ../templates/ansible.cfg.j2
+        dest: ../ansible.cfg                
+    - name: Setup Kakao i Cloud API Config Directory
+      ansible.builtin.file:
+        path: ~/.config/openstack/
+        mode: '0700'        
+    - name: Setup Kakao i Cloud API Config
+      ansible.builtin.template:
+        src: ../templates/clouds.yml.j2
+        dest: ~/.config/openstack/clouds.yml         
+    - name: Setup Dynamic Inventory Config
+      ansible.builtin.template:
+        src: ../templates/openstack.yml.j2
+        dest: ../inventory/openstack.yml        
+    - name: Setup Group Var Config for all
+      ansible.builtin.template:
+        src: ../templates/all.yml.j2
+        dest: ../inventory/group_vars/all.yml       
+    - name: Setup Group Var Config for ansible
+      ansible.builtin.template:
+        src: ../templates/ansible.yml.j2
+        dest: ../inventory/group_vars/ansible.yml              

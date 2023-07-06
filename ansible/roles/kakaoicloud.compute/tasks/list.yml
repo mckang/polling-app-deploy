@@ -1,0 +1,8 @@
+---
+
+- openstack.cloud.server_info:
+    filters: "{{VM_LIST_FILTER}}"
+    server: "{{VM_LIST_SERVER_FILTER}}"
+  register: VM_LIST
+- debug:
+    var: VM_LIST

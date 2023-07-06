@@ -1,0 +1,6 @@
+---
+VM_LIST_FILTER:
+  vm_state: active
+  # metadata:
+  #   ansible: "true"
+VM_LIST_SERVER_FILTER: "*"

@@ -1,0 +1,22 @@
+all:
+  children:
+    manager:
+      hosts:
+{% for host in groups.now_added %}
+{% if (hostvars[host].role=="manager"): %}
+        manager:
+          ansible_ssh_host: {{ hostvars[host].ansible_ssh_host }}
+{% endif %}
+{% endfor %}
+    worker:
+      hosts:
+{% for host in groups.now_added %}
+{% if (hostvars[host].role=="worker"): %}
+        {{ host }}:
+          ansible_ssh_host: {{ hostvars[host].ansible_ssh_host }}        
+{% endif %}
+{% endfor %}
+  vars:
+    ansible_user: "{{ AnsibleUser }}"
+    ansible_ssh_private_key_file: "{{ AnsiblePrivateKeyFile }}"
+    ansible_ssh_common_args: "-o StrictHostKeyChecking=no"
