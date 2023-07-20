@@ -10,6 +10,25 @@
 4. KiC Bastion Host with public ip
 5. KiC Bastoin Host key file for jumphost
 
+6. 공공클라우드 활용에 따른 변경 사항
+   gcu-master 키페어 생성
+   gcu-vm 보안그룹 생성 : bastion 보안그룹과의 통신 설정, lb 와의 통신 설정
+   ```
+   templates/clouds.yml
+   region_name: 'kr-gov-central-1'
+   auth_url: 'https://iam.kakaoicloud-kr-gov.com/identity/v3'
+   ```
+   ```
+   ansible/playbooks/vms/vars.yml
+   subnet_id: bd6d7c3b-1784-4d9e-92d5-1fb939cb555c
+   VM_FLAVOR_NAME: m1i.xlarge
+   ```   
+   ```
+   ansible/playbooks/vms/create.yml
+   VM_KEY_NAME: "gcu-master"
+   VM_SG_NAMES: 
+     - "gcu-vm"
+   ```
 ---
 
 #configuration
