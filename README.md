@@ -11,6 +11,8 @@
 5. KiC Bastoin Host key file for jumphost
 
 6. 공공클라우드 활용에 따른 변경 사항
+   https://account.kakaoicloud-kr-gov.com/domain
+   
    gcu-master 키페어 생성
    gcu-vm 보안그룹 생성 : bastion 보안그룹과의 통신 설정, lb 와의 통신 설정
    ```
